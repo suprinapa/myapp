@@ -1,19 +1,25 @@
 package myapp
 
-import grails.gorm.transactions.Transactional
 import grails.web.servlet.mvc.GrailsParameterMap
 
-@Transactional
 class MemberService {
 
-    def listMembers() {
-        List<Member> memberList = Member.list();
-        return memberList
+    def list(GrailsParameterMap params) {
+        params.max = params.max ?: 10
+        //Creates and returns an instance of HibernateCriteriaBuilder that can be used to construct criteria queries
+        List<Member> memberList = Member.createCriteria().list(params) {
+            if (params?.colName && params?.colValue) {
+                like(params.colName, "%" + params.colValue + "%")
+            }
+            if (!params.sort) {
+                order("name", "asc")
+            }
+        }
+        return [list: memberList]
     }
 
     def create(GrailsParameterMap params){
         Member member = new Member(params)
-        member.get(params.id)
         member.id = params.id
         member.name= params.name
         member.address= params.address
@@ -23,12 +29,12 @@ class MemberService {
     }
 
     def update(GrailsParameterMap params){
-// retrieve the members from the database
-            def member = Member.get(params.id)
-// update properties in the employee
-            member.name = params.name
-            member.address = params.address
-// update the database
+        // retrieve the members from the database
+        def member = Member.get(params.id)
+        // update properties in the employee
+        member.name = params.name
+        member.address = params.address
+        // update the database
             member.save()
     }
 
